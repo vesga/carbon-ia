@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal - Carbón IA</title>
+    <!-- Estilos CSS locales -->
+    <link rel="stylesheet" href="./css/styles.css">
+    <!-- Iconos Phosphor -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+    <!-- PANTALLA DE ACCESO MÍNIMA (Solo Teléfono) -->
+    <div id="auth-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0f172a; display: flex; justify-content: center; align-items: center; z-index: 9999;">
+        <div style="background: #1e293b; padding: 40px; border-radius: 16px; border: 1px solid #334155; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <div style="text-align: center; margin-bottom: 25px;">
+                <i class="ph-bold ph-fire" style="font-size: 3rem; color: #ea580c;"></i>
+                <h2 style="color: #fff; font-size: 1.8rem; margin-top: 10px;">Carbón<span>IA</span></h2>
+                <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 5px;">Ingresa con tu número de teléfono</p>
+            </div>
+            
+            <form id="auth-form" style="display: flex; flex-direction: column; gap: 15px;">
+                <div>
+                    <label style="color: #cbd5e1; font-size: 0.85rem; display: block; margin-bottom: 5px;">Número de Teléfono</label>
+                    <input type="text" id="auth-telefono" placeholder="Ej: 3001234567" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 1rem;">
+                </div>
+                <button type="submit" id="auth-btn" style="padding: 12px; background: #ea580c; color: #fff; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 10px;">Ingresar al Portal</button>
+            </form>
+            <div id="auth-status" style="margin-top: 15px; font-size: 0.9rem; text-align: center; color: #38bdf8;"></div>
+        </div>
+    </div>
+
+    <!-- APLICACIÓN PRINCIPAL (Dashboard oculto hasta iniciar sesión) -->
+    <div class="app-container" id="app-dashboard" style="display: none;">
+        <!-- Navegación Lateral -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="ph-bold ph-fire logo-icon"></i>
+                <h2>Carbón<span>IA</span></h2>
+            </div>
+
+            <!-- Menú para CLIENTE -->
+            <nav class="nav-menu" id="menu-cliente">
+                <a href="#" class="nav-item active" data-target="vista-portal"><i class="ph-bold ph-storefront"></i> Mi Portal (Chat)</a>
+                <a href="#" class="nav-item" data-target="vista-perfil"><i class="ph-bold ph-user"></i> Mis Datos</a>
+                <a href="#" class="nav-item" data-target="vista-pedidos"><i class="ph-bold ph-shopping-bag"></i> Mis Pedidos</a>
+                <a href="#" class="nav-item" data-target="vista-soporte"><i class="ph-bold ph-headset"></i> Soporte IA</a>
+            </nav>
+
+            <!-- Menú exclusivo para ADMIN (con Stock y Ofertas separados) -->
+            <nav class="nav-menu" id="menu-admin" style="display: none;">
+                <a href="#" class="nav-item active" data-target="vista-admin-pedidos"><i class="ph-bold ph-clipboard-text"></i> Pedidos y Pagos</a>
+                <a href="#" class="nav-item" data-target="vista-admin-stock"><i class="ph-bold ph-package"></i> Carbón y Stock</a>
+                <a href="#" class="nav-item" data-target="vista-admin-ofertas"><i class="ph-bold ph-tag"></i> Ofertas</a>
+            </nav>
+
+            <div style="margin-top: auto; display: flex; flex-direction: column; gap: 12px;">
+                <button type="button" class="btn-cerrar-sesion" style="width: 100%; padding: 10px 12px; background: #334155; color: #f8fafc; border: 1px solid #475569; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="ph-bold ph-sign-out"></i> Cerrar Sesión
+                </button>
+                <div class="agent-status">
+                    <span class="status-dot"></span>
+                    <span>Gemini Flash Lite Conectado</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <main class="main-content">
+            
+            <!-- Vista 1: Mi Portal Cliente -->
+            <div id="vista-portal" class="vista-contenido">
+                <header class="top-header">
+                    <div>
+                        <h1 id="welcome-user-title">¡Hola, bienvenido a tu portal! 👋</h1>
+                        <p class="subtitle">Elige el tipo de carbón o pídelo directo en el chat para calcular tu total al instante</p>
+                    </div>
+                </header>
+
+                <div class="dashboard-split" style="grid-template-columns: 1fr 1.3fr;">
+                    <!-- Panel Izquierdo: Catálogo Dinámico y Pedido Actual -->
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <section class="panel" style="padding: 20px;">
+                            <h2 style="font-size: 1.1rem; color: #fff; margin-bottom: 15px;"><i class="ph-bold ph-storefront"></i> Catálogo de Productos</h2>
+                            <div id="catalogo-dinamico" style="display: flex; flex-direction: column; gap: 15px;"></div>
+                        </section>
+
+                        <!-- Panel de Pedido Actual -->
+                        <section class="panel" style="padding: 20px;">
+                            <h2 style="font-size: 1.1rem; color: #fff; margin-bottom: 15px;"><i class="ph-bold ph-shopping-cart"></i> Pedido Actual</h2>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Detalle</th>
+                                            <th>Total</th>
+                                            <th>Estado</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabla-pedido-actual"></tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- Panel Derecho: Consola del Asistente IA con Adjunto de Pagos -->
+                    <section class="panel chat-panel" style="height: 680px;">
+                        <div class="panel-header">
+                            <h2><i class="ph-bold ph-robot"></i> Asistente Virtual de Ventas</h2>
+                            <span class="chat-user-tag">Gemini Flash Lite</span>
+                        </div>
+                        <div class="chat-messages" id="chat-box" style="height: 480px;"></div>
+                        
+                        <div id="file-indicator" style="padding: 6px 12px; font-size: 0.8rem; color: #38bdf8; background: #0f172a; border-top: 1px solid #334155; display: none; align-items: center; gap: 8px;">
+                            <i class="ph-bold ph-paperclip"></i> <span id="file-name-text">Ningún archivo seleccionado</span>
+                        </div>
+
+                        <form id="chat-form" class="chat-input-container" style="display: flex; gap: 8px; align-items: center;">
+                            <label for="chat-file" style="cursor: pointer; color: var(--text-muted); font-size: 1.2rem; padding: 0 5px;" title="Adjuntar comprobante (PDF/Imagen)">
+                                <i class="ph-bold ph-paperclip"></i>
+                            </label>
+                            <input type="file" id="chat-file" accept=".pdf,image/*" style="display: none;">
+                            
+                            <input type="text" id="chat-input" placeholder="Ej: Quiero 3 bultos de Carbón de coco..." autocomplete="off" style="flex: 1;">
+                            <button type="submit" class="btn-send"><i class="ph-bold ph-paper-plane-right"></i></button>
+                        </form>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Vista 2: Mis Datos Personales (Cliente) -->
+            <div id="vista-perfil" class="vista-contenido" style="display: none;">
+                <header class="top-header">
+                    <h1>Mis Datos Personales</h1>
+                    <p class="subtitle">Información registrada en nuestra base de datos para envíos</p>
+                </header>
+                <div class="panel" style="padding: 30px; max-width: 600px;">
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <div>
+                            <label style="color: var(--text-muted); font-size: 0.85rem; display: block; margin-bottom: 5px;">Nombre Completo</label>
+                            <div id="perfil-nombre" style="background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155; color: #fff; font-size: 1rem;">Cargando...</div>
+                        </div>
+                        <div>
+                            <label style="color: var(--text-muted); font-size: 0.85rem; display: block; margin-bottom: 5px;">Número de Teléfono</label>
+                            <div id="perfil-telefono" style="background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155; color: #fff; font-size: 1rem;">-</div>
+                        </div>
+                        <div>
+                            <label style="color: var(--text-muted); font-size: 0.85rem; display: block; margin-bottom: 5px;">Dirección de Entrega en Bucaramanga</label>
+                            <div id="perfil-direccion" style="background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155; color: #fff; font-size: 1rem;">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vista 3: Mis Pedidos (Cliente) -->
+            <div id="vista-pedidos" class="vista-contenido" style="display: none;">
+                <header class="top-header">
+                    <h1>Historial de Pedidos</h1>
+                    <p class="subtitle">Consulta detallada de todas tus transacciones</p>
+                </header>
+                <div class="panel" style="padding: 25px;">
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID Pedido</th>
+                                    <th>Cantidad Bultos</th>
+                                    <th>Total (COP)</th>
+                                    <th>Estado del Pago</th>
+                                    <th>Dirección</th>
+                                    <th>Recibo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-pedidos-completa"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vista 4: Soporte IA (Cliente) -->
+            <div id="vista-soporte" class="vista-contenido" style="display: none;">
+                <header class="top-header">
+                    <h1>Soporte Comercial e IA</h1>
+                    <p class="subtitle">Pregúntale lo que quieras a nuestro asistente sobre envíos, pagos y productos</p>
+                </header>
+                <div class="panel" style="padding: 20px; max-width: 800px;">
+                    <div class="chat-messages" id="soporte-chat-box" style="height: 400px; background: #0f172a; padding: 15px; border-radius: 8px; overflow-y: auto; margin-bottom: 15px;">
+                        <div class="msg bot">¡Hola! Soy tu asistente de soporte técnico y comercial en Bucaramanga. ¿Tienes dudas sobre nuestros tipos de carbón, tiempos de entrega o métodos de pago (Nequi, Bancolombia o efectivo)? ¡Pregúntame con confianza! 💬</div>
+                    </div>
+                    <form id="soporte-form" style="display: flex; gap: 8px;">
+                        <input type="text" id="soporte-input" placeholder="Ej: ¿Cuánto tarda el envío a Cañaveral?" autocomplete="off" required style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff;">
+                        <button type="submit" style="padding: 12px 20px; background: #ea580c; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;"><i class="ph-bold ph-paper-plane-right"></i></button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Vista Admin 1: Pedidos y Comprobantes -->
+            <div id="vista-admin-pedidos" class="vista-contenido" style="display: none;">
+                <header class="top-header">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap; width: 100%;">
+                        <div>
+                            <h1 id="admin-welcome-title">Panel de Administración</h1>
+                            <p class="subtitle">Revisión de pedidos, comprobantes de pago y aprobación/rechazo</p>
+                        </div>
+                        <button id="btn-refrescar-admin" type="button" style="padding: 10px 16px; background: #ea580c; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                            Actualizar Pedidos
+                        </button>
+                    </div>
+                </header>
+                <div class="panel" style="padding: 25px;">
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Cliente</th>
+                                    <th>Bultos</th>
+                                    <th>Total</th>
+                                    <th>Comprobante</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-admin-pedidos"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vista Admin 2: Carbón y Stock -->
+            <div id="vista-admin-stock" class="vista-contenido" style="display: none;">
+                <header class="top-header">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap; width: 100%;">
+                        <div>
+                            <h1>Tipos de Carbón y Stock</h1>
+                            <p class="subtitle">Crea o elimina tipos de carbón, ajusta nombre, descripción o precios y llena el inventario</p>
+                        </div>
+                        <button id="btn-cargar-base" type="button" style="padding: 10px 14px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                            Cargar Tipos Base
+                        </button>
+                    </div>
+                </header>
+
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    <!-- Formulario para crear nuevo tipo de carbón -->
+                    <section class="panel" style="padding: 25px;">
+                        <h2 style="font-size: 1.15rem; color: #fff; margin-bottom: 16px;"><i class="ph-bold ph-plus-circle"></i> Nuevo Tipo de Carbón</h2>
+                        <form id="form-nuevo-producto" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; align-items: end;">
+                            <div>
+                                <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 6px;">Nombre del Producto</label>
+                                <input type="text" id="prod-nombre" placeholder="Ej: Carbón de Algarrobo (15 Kg)" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff;">
+                            </div>
+                            <div>
+                                <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 6px;">Precio (COP)</label>
+                                <input type="number" id="prod-precio" min="1000" step="500" placeholder="42000" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff;">
+                            </div>
+                            <div>
+                                <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 6px;">Stock Inicial (Unidades)</label>
+                                <input type="number" id="prod-stock" min="0" value="30" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff;">
+                            </div>
+                            <div>
+                                <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 6px;">Foto del Producto</label>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <img id="prod-foto-preview" src="https://images.unsplash.com/photo-1544025162-d76694265947?w=150" alt="Vista previa" style="width: 38px; height: 38px; object-fit: cover; border-radius: 6px; border: 1px solid #334155;">
+                                    <input type="file" id="prod-foto-file" accept="image/*" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #cbd5e1; font-size: 0.78rem;">
+                                </div>
+                            </div>
+                            <div>
+                                <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 6px;">Descripción</label>
+                                <input type="text" id="prod-desc" placeholder="Ideal para asados largos" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff;">
+                            </div>
+                            <button type="submit" style="padding: 11px 16px; background: #ea580c; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                                Guardar Carbón
+                            </button>
+                        </form>
+                    </section>
+
+                    <!-- Tabla de Inventario y Stock -->
+                    <section class="panel" style="padding: 25px;">
+                        <h2 style="font-size: 1.15rem; color: #fff; margin-bottom: 16px;"><i class="ph-bold ph-package"></i> Control de Stock y Precios</h2>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Descripción</th>
+                                        <th>Precio (COP)</th>
+                                        <th>Stock Actual</th>
+                                        <th>Llenar Stock</th>
+                                        <th>Cambiar Foto</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-admin-stock"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Vista Admin 3: Ofertas y Promociones (Cálculo automático por %) -->
+            <div id="vista-admin-ofertas" class="vista-contenido" style="display: none;">
+                <header class="top-header">
+                    <div>
+                        <h1>Ofertas y Promociones</h1>
+                        <p class="subtitle">Indica la etiqueta y el porcentaje de descuento; el sistema calcula el precio automáticamente sobre el precio base</p>
+                    </div>
+                </header>
+
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    <!-- Formulario rápido para lanzar una oferta sobre un producto -->
+                    <section class="panel" style="padding: 25px;">
+                        <h2 style="font-size: 1.15rem; color: #fff; margin-bottom: 16px;"><i class="ph-bold ph-tag"></i> Crear / Asignar Oferta</h2>
+                        <form id="form-nueva-oferta" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; align-items: end;">
+                            <div>
+                                <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 6px;">Tipo de Carbón</label>
+                                <select id="oferta-producto-select" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff;"></select>
+                            </div>
+                            <div>
+                                <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 6px;">Etiqueta de Oferta</label>
+                                <input type="text" id="oferta-texto" placeholder="Ej: Promo Fin de Semana" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff;">
+                            </div>
+                            <div>
+                                <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 6px;">Descuento (%)</label>
+                                <input type="number" id="oferta-porcentaje" min="1" max="90" step="1" placeholder="Ej: 15" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff;">
+                            </div>
+                            <button type="submit" id="btn-aplicar-oferta" style="padding: 11px 16px; background: #ea580c; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                                Aplicar Oferta
+                            </button>
+                        </form>
+                    </section>
+
+                    <!-- Tabla dedicada a gestión de ofertas -->
+                    <section class="panel" style="padding: 25px;">
+                        <h2 style="font-size: 1.15rem; color: #fff; margin-bottom: 16px;"><i class="ph-bold ph-percent"></i> Ofertas Activas y Productos</h2>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Precio Actual</th>
+                                        <th>Oferta Activa</th>
+                                        <th>Editar Oferta</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-admin-ofertas"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Visor de Foto de Comprobante de Pago -->
+    <div id="modal-comprobante" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(2, 6, 23, 0.85); justify-content: center; align-items: center; z-index: 10000; padding: 20px;">
+        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; max-width: 520px; width: 100%; padding: 20px; text-align: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <h3 style="color: #fff; font-size: 1.05rem;">Comprobante de Pago Adjunto</h3>
+                <button type="button" onclick="cerrarModalComprobante()" style="background: #334155; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: bold;">Cerrar</button>
+            </div>
+            <img id="img-comprobante-modal" src="" alt="Comprobante de pago" style="max-width: 100%; max-height: 65vh; border-radius: 8px; border: 1px solid #475569;">
+        </div>
+    </div>
+
+    <!-- Script principal de la aplicación -->
+    <script src="./js/main.js"></script>
+</body>
+</html>

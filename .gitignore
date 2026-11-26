@@ -1,0 +1,22 @@
+﻿# Variables de entorno y secretos
+.env
+.env.*
+!.env.example
+*.pem
+
+# Python y entornos virtuales
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Editores y sistema operativo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
